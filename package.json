@@ -1,0 +1,25 @@
+{
+  "name": "casso-api-transaction-demo",
+  "version": "1.0.0",
+  "description": "Casso Console - Demo Tra cứu giao dịch ngân hàng qua Proxy API",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "tunnel": "node scripts/tunnel.js"
+  },
+  "keywords": [
+    "casso",
+    "banking-api",
+    "transactions",
+    "proxy-api",
+    "demo"
+  ],
+  "author": "Casso",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}

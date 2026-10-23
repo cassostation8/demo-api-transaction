@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casso Console · Demo Open API</title>
+  <meta name="description" content="Trải nghiệm dashboard dòng tiền từ dữ liệu giao dịch ngân hàng qua Casso Console Open API, rồi kết nối dữ liệu thật trong 3 bước.">
+  <link rel="icon" href="assets/casso-logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#hero" aria-label="Casso Console">
+      <img src="assets/casso-logo.svg" alt="Casso" class="brand-logo">
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span class="brand-product">Console <span>Open API Demo</span></span>
+    </a>
+    <nav class="topnav" aria-label="Mục lục">
+      <a href="#hero">Dashboard</a>
+      <a href="#how">Cách hoạt động</a>
+      <a href="#try">Kết nối dữ liệu thật</a>
+    </nav>
+    <a class="gh-link" id="githubLink" href="https://github.com" target="_blank" rel="noopener" aria-label="Mã nguồn demo trên GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      <span>Mã nguồn</span>
+    </a>
+  </header>
+
+  <main>
+    <!-- ============ HERO: dashboard tương tác đầy đủ ============ -->
+    <section class="hero" id="hero">
+      <div class="wrap">
+        <div class="hero-head">
+          <div>
+            <span class="eyebrow">Casso Console Open API</span>
+            <h1>Dòng tiền của doanh nghiệp, cập nhật từ chính tài khoản ngân hàng</h1>
+            <p class="lead">Đây là dashboard đội của bạn xây được chỉ với 3 lời gọi API. Thử lọc theo tài khoản, loại, danh mục, thời gian — mọi số liệu cập nhật ngay.</p>
+          </div>
+          <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="#try">Kết nối dữ liệu thật
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></a>
+            <a class="btn btn-ghost btn-lg" href="#how">Cách hoạt động</a>
+          </div>
+        </div>
+
+      </div>
+      <div class="hero-stage">
+        <div class="source-bar">
+          <div class="source-left">
+            <div class="seg" id="heroSource" role="tablist" aria-label="Nguồn dữ liệu dashboard">
+              <button class="seg-btn" role="tab" data-source="sample">Dữ liệu minh hoạ</button>
+              <button class="seg-btn" role="tab" data-source="real">Dữ liệu thật của bạn</button>
+            </div>
+            <span class="data-badge sample" id="heroBadge"></span>
+          </div>
+          <button class="btn btn-primary" id="btnQuickLink" data-quick-link>
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h8"/></svg>
+            <span id="btnQuickLinkLabel">Thử với tài khoản demo · Sandbox</span>
+          </button>
+        </div>
+        <div class="app-frame" id="heroLedger"></div>
+      </div>
+    </section>
+
+    <!-- ============ CÁCH HOẠT ĐỘNG ============ -->
+    <section class="how" id="how">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Cách hoạt động</span>
+          <h2>Ngân hàng → Casso Console → ứng dụng của bạn</h2>
+          <p class="lead">Ứng dụng của bạn không bao giờ cầm mật khẩu ngân hàng. Casso Console giữ kết nối; ứng dụng chỉ nhận một token để đọc giao dịch.</p>
+        </div>
+
+        <div class="flow-diagram" role="img" aria-label="Sơ đồ: ngân hàng đồng bộ về Casso Console, ứng dụng của bạn liên kết, lấy accessToken rồi gọi API giao dịch">
+          <div class="node">
+            <span class="node-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg></span>
+            <strong>Ngân hàng</strong>
+            <span>VCB, BIDV, TCB, MB… 27+ ngân hàng</span>
+          </div>
+          <div class="edge"><span class="edge-step">Đồng bộ tự động</span><span class="edge-line" aria-hidden="true"></span></div>
+          <div class="node node-brand">
+            <span class="node-icon"><img src="assets/casso-logo.svg" alt=""></span>
+            <strong>Casso Console</strong>
+            <span>Giữ kết nối, chuẩn hoá dữ liệu</span>
+          </div>
+          <div class="edge">
+            <span class="edge-step"><b>1</b> Liên kết tài khoản</span>
+            <span class="edge-step"><b>2</b> Gọi API giao dịch</span>
+            <span class="edge-step"><b>3</b> Nhận bảng kê</span>
+            <span class="edge-line edge-line-rev" aria-hidden="true"></span>
+          </div>
+          <div class="node">
+            <span class="node-icon"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 21h8M12 18v3"/></svg></span>
+            <strong>Ứng dụng của bạn</strong>
+            <span>ERP, POS, kế toán, app nội bộ</span>
+          </div>
+        </div>
+
+        <div class="value-grid">
+          <div class="value">
+            <span class="value-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
+            <strong>Bảo mật</strong>
+            <p>Doanh nghiệp đăng nhập ngân hàng một lần trên Casso. Ứng dụng chỉ giữ token đọc dữ liệu, thu hồi được bất cứ lúc nào.</p>
+          </div>
+          <div class="value">
+            <span class="value-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5M3 17l9 5 9-5"/></svg></span>
+            <strong>Một chuẩn cho mọi ngân hàng</strong>
+            <p>Cùng một định dạng giao dịch cho mọi ngân hàng. Viết tích hợp một lần, dùng cho tất cả.</p>
+          </div>
+          <div class="value">
+            <span class="value-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+            <strong>Tích hợp trong 1 buổi</strong>
+            <p>3 bước như bên dưới. Không cần tự đọc sao kê hay kết nối từng ngân hàng.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3 BƯỚC VỚI DỮ LIỆU THẬT ============ -->
+    <section class="try" id="try">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Kết nối dữ liệu thật · 3 bước</span>
+          <h2>Thay dữ liệu minh hoạ bằng giao dịch thật của doanh nghiệp bạn</h2>
+          <p class="lead">Mỗi bước là đúng lời gọi API mà đội kỹ thuật sẽ viết. Bên phải là request và response thật để CTO đối chiếu.</p>
+        </div>
+
+        <!-- Bước 1: Liên kết tài khoản -->
+        <article class="step-card" id="step1" data-step="1">
+          <header class="step-head">
+            <span class="step-num">1</span>
+            <div><h3>Liên kết tài khoản ngân hàng</h3><p class="muted">Chọn một trong hai cách. Kết quả là <code>accessToken</code> cho kết nối đó.</p></div>
+            <span class="step-status"></span>
+          </header>
+
+          <div class="step-intro">
+            <div class="field">
+              <span>Môi trường</span>
+              <div class="env-switch env-switch-lg" role="radiogroup" aria-label="Môi trường">
+                <button role="radio" class="env-option" data-env="sandbox"><span class="env-dot"></span>Sandbox · dữ liệu thử</button>
+                <button role="radio" class="env-option" data-env="production"><span class="env-dot"></span>Production · ngân hàng thật</button>
+              </div>
+            </div>
+            <div class="env-note" id="envNote"></div>
+          </div>
+
+          <div class="console-setup" id="consoleSetup">
+            <div class="console-setup-head">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+              <div>
+                <strong>Cấu hình trên Casso Console</strong>
+                <p class="muted">Vào <a href="https://console.casso.vn" target="_blank" rel="noopener">Casso Console ↗</a> → API Credential → chỉnh sửa, dán 2 URL dưới đây rồi Save. Cần cho cách liên kết bằng iframe.</p>
+              </div>
+            </div>
+            <div class="setup-rows">
+              <div class="setup-row">
+                <span class="setup-label">Authorized Redirect URIs</span>
+                <code id="callbackUrl">…</code>
+                <button class="btn btn-ghost btn-sm" data-copy-from="callbackUrl" data-copy-label="Redirect URI">Copy</button>
+              </div>
+              <div class="setup-row">
+                <span class="setup-label">Authorized Webhook URLs</span>
+                <code id="webhookUrl">…</code>
+                <button class="btn btn-ghost btn-sm" data-copy-from="webhookUrl" data-copy-label="Webhook URL">Copy</button>
+              </div>
+            </div>
+            <div class="inline-result warn" id="localhostWarn" hidden></div>
+          </div>
+
+          <div class="method-tabs" role="tablist">
+            <button class="method-tab" role="tab" data-method="claim">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+              <span><strong>Liên kết bằng link_id</strong><small>Đã liên kết trên Casso Console</small></span>
+            </button>
+            <button class="method-tab" role="tab" data-method="widget">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h8"/></svg>
+              <span><strong>Liên kết bằng iframe Cas Link</strong><small>Khách đăng nhập ngân hàng ngay trong app</small></span>
+            </button>
+          </div>
+
+          <!-- Tab 1: link_id -->
+          <div class="step-body" id="panelClaim">
+            <div class="step-form">
+              <div class="cred-fields" data-cred-group></div>
+              <label class="field">
+                <span>link_id <em>— copy trên thẻ kết nối ở <a href="https://console.casso.vn" target="_blank" rel="noopener">Casso Console ↗</a></em></span>
+                <input type="text" id="claimLinkId" placeholder="lnk_..." autocomplete="off" spellcheck="false">
+              </label>
+              <button class="btn btn-primary" id="btnClaim">Lấy accessToken</button>
+            </div>
+            <div class="api-panel" id="apiClaim"></div>
+          </div>
+
+          <!-- Tab 2: iframe Cas Link -->
+          <div class="step-body" id="panelWidget" hidden>
+            <div class="step-form">
+              <ol class="flow">
+                <li class="flow-step" data-wstep="1">
+                  <div class="flow-head"><span class="flow-num">a</span><h4>Nhập key và tải danh sách ngân hàng</h4></div>
+                  <div class="flow-body">
+                    <div class="cred-fields" data-cred-group></div>
+                    <button class="btn btn-secondary" id="btnFiServices">Tải danh sách ngân hàng</button>
+                  </div>
+                </li>
+                <li class="flow-step" data-wstep="2">
+                  <div class="flow-head"><span class="flow-num">b</span><h4>Chọn ngân hàng → tạo phiên liên kết</h4></div>
+                  <div class="flow-body">
+                    <div class="bank-toolbar">
+                      <input type="search" id="bankSearch" placeholder="Tìm ngân hàng…" aria-label="Tìm ngân hàng">
+                      <div class="seg" id="bankTypeSeg">
+                        <button class="seg-btn active" data-type="ENTERPRISE">Doanh nghiệp</button>
+                        <button class="seg-btn" data-type="PERSONAL">Cá nhân</button>
+                      </div>
+                    </div>
+                    <div class="bank-grid" id="bankGrid"></div>
+                    <button class="btn btn-secondary" id="btnGrantToken" disabled>Tạo phiên liên kết</button>
+                    <div class="inline-result" id="grantTokenResult" hidden></div>
+                  </div>
+                </li>
+                <li class="flow-step" data-wstep="3">
+                  <div class="flow-head"><span class="flow-num">c</span><h4>Mở iframe Cas Link → đăng nhập ngân hàng</h4></div>
+                  <div class="flow-body">
+                    <div class="test-accounts" data-sandbox-only></div>
+                    <button class="btn btn-secondary" id="btnOpenWidget">Mở iframe Cas Link</button>
+                    <p class="hint">iframe chỉ gửi publicToken về domain đã khai báo ở <b>Authorized Redirect URIs</b> phía trên.</p>
+                  </div>
+                  <div class="inline-result" id="publicTokenResult" hidden></div>
+                  <details class="manual-token">
+                    <summary>Đã có publicToken? Dán vào đây</summary>
+                    <div class="manual-row">
+                      <input type="text" id="manualPublicToken" placeholder="pub_..." autocomplete="off" spellcheck="false" aria-label="publicToken">
+                      <button class="btn btn-ghost btn-sm" id="btnUseManualPublic">Dùng</button>
+                    </div>
+                  </details>
+                </li>
+                <li class="flow-step" data-wstep="4">
+                  <div class="flow-head"><span class="flow-num">d</span><h4>Đổi publicToken lấy accessToken</h4></div>
+                  <div class="flow-body">
+                    <button class="btn btn-primary" id="btnExchange">Lấy accessToken</button>
+                  </div>
+                </li>
+              </ol>
+            </div>
+            <div class="api-panel" id="apiWidget"></div>
+          </div>
+
+          <div class="step-foot" id="tokenResult" hidden></div>
+        </article>
+
+        <!-- Bước 2: Gọi API -->
+        <article class="step-card" id="step2" data-step="2">
+          <header class="step-head">
+            <span class="step-num">2</span>
+            <div><h3>Gọi API lấy giao dịch</h3><p class="muted">Nhập thông tin API rồi lấy <code>transactions</code>. Gọi <code>identity</code> là tuỳ chọn: xem tổ chức và danh sách tài khoản trên kết nối.</p></div>
+            <span class="step-status"></span>
+          </header>
+          <div class="step-body">
+            <div class="step-form">
+              <label class="field">
+                <span>accessToken <em>(Authorization)</em></span>
+                <input type="text" id="txToken" placeholder="Tự điền sau bước 1, hoặc dán token có sẵn" autocomplete="off" spellcheck="false">
+              </label>
+              <div class="cred-fields" data-cred-group></div>
+              <div class="field">
+                <span>Khoảng thời gian <em>(fromDate / toDate)</em></span>
+                <div class="quick-ranges" id="quickRanges">
+                  <button data-days="7">7 ngày</button>
+                  <button data-days="30">30 ngày</button>
+                  <button data-range="month">Tháng này</button>
+                  <button data-days="90">90 ngày</button>
+                </div>
+                <div class="field-row">
+                  <label class="field"><span class="sr-only">Từ ngày</span><input type="date" id="txFrom" aria-label="Từ ngày"></label>
+                  <label class="field"><span class="sr-only">Đến ngày</span><input type="date" id="txTo" aria-label="Đến ngày"></label>
+                </div>
+              </div>
+              <label class="field">
+                <span>Số tài khoản <em>(accountNumber, tuỳ chọn)</em></span>
+                <input type="text" id="txAccount" placeholder="Bỏ trống = tất cả tài khoản trên kết nối" list="accountOptions" autocomplete="off">
+                <datalist id="accountOptions"></datalist>
+              </label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <button class="btn btn-primary btn-lg" id="btnFetch">Lấy giao dịch</button>
+                <button class="btn btn-secondary btn-lg" id="btnIdentity">Lấy thông tin tài khoản</button>
+              </div>
+              <div class="inline-result" id="txResult" hidden></div>
+            </div>
+            <div class="api-panel" id="apiTx"></div>
+          </div>
+        </article>
+
+        <!-- Bước 3: Bảng kê -->
+        <article class="step-card" id="step3" data-step="3">
+          <header class="step-head">
+            <span class="step-num">3</span>
+            <div><h3>Bảng kê giao dịch</h3><p class="muted" id="statementMeta">Response của API, trình bày thành bảng kê để kế toán dùng ngay.</p></div>
+            <button class="btn btn-primary" id="btnOpenDashboard" disabled>
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+              Xem dashboard
+            </button>
+          </header>
+          <div class="statement-wrap">
+            <div class="app-frame" id="statementLedger">
+              <div class="statement-empty">Bảng kê hiện ở đây sau khi gọi API thành công ở bước 2.</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ DASHBOARD DỮ LIỆU THẬT ============ -->
+  <div class="result-overlay" id="resultOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result-bar">
+      <div class="result-bar-left">
+        <span class="data-badge real" id="resultBadge"></span>
+        <div>
+          <h2 id="resultTitle">Dashboard dòng tiền · dữ liệu thật</h2>
+          <p class="muted" id="resultMeta"></p>
+        </div>
+      </div>
+      <div class="result-bar-actions">
+        <button class="btn btn-ghost" id="btnRefetch">Gọi lại với tham số khác</button>
+        <button class="btn btn-ghost" id="btnCloseResult" aria-label="Đóng dashboard">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg> Đóng
+        </button>
+      </div>
+    </div>
+    <div class="result-body">
+      <div class="app-frame app-frame-full" id="fullLedger"></div>
+    </div>
+  </div>
+
+  <!-- ============ HỘP THOẠI LIÊN KẾT NHANH (iframe Cas Link) ============ -->
+  <!-- Lớp phủ thường (không dùng <dialog>): <dialog> nằm ở top layer sẽ che mất iframe Cas Link. -->
+  <div class="ql-overlay" id="quickLinkModal" hidden role="dialog" aria-modal="true" aria-labelledby="qlTitle">
+    <div class="ql-card">
+      <header class="ql-head">
+        <div>
+          <span class="env-pill" id="qlEnv"></span>
+          <h2 id="qlTitle">Liên kết bằng iframe Cas Link</h2>
+          <p class="muted" id="qlSubtitle"></p>
+        </div>
+        <button class="icon-btn" data-qlclose aria-label="Đóng">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+
+      <div class="ql-body">
+        <section class="ql-sec" id="qlSecKeys">
+          <h3><span class="ql-num">1</span>Key ứng dụng</h3>
+          <div class="cred-fields" data-cred-group></div>
+          <div class="test-accounts" id="qlTestAccounts"></div>
+        </section>
+
+        <section class="ql-sec" id="qlSecBank">
+          <h3><span class="ql-num">2</span>Ngân hàng</h3>
+          <button class="btn btn-secondary btn-sm" id="qlLoadBanks">Tải danh sách ngân hàng</button>
+          <div class="bank-toolbar">
+            <input type="search" id="qlBankSearch" placeholder="Tìm ngân hàng…" aria-label="Tìm ngân hàng">
+            <div class="seg">
+              <button class="seg-btn active" data-type="ENTERPRISE">Doanh nghiệp</button>
+              <button class="seg-btn" data-type="PERSONAL">Cá nhân</button>
+            </div>
+          </div>
+          <div class="bank-grid" id="qlBankGrid"></div>
+        </section>
+
+        <ol class="ql-progress" id="qlProgress" hidden>
+          <li data-qlstep="token">Tạo phiên liên kết <code>grant/token</code></li>
+          <li data-qlstep="login">Đăng nhập ngân hàng trong iframe</li>
+          <li data-qlstep="exchange">Lấy accessToken <code>grant/exchange</code></li>
+          <li data-qlstep="fetch">Lấy giao dịch <code>transactions</code></li>
+        </ol>
+
+        <!-- Giai đoạn 2: chỉ hiện sau khi liên kết thành công -->
+        <section class="ql-sec ql-sec-range" id="qlSecRange" hidden>
+          <div class="ql-linked" id="qlLinked"></div>
+          <h3><span class="ql-num">3</span>Chọn khoảng thời gian lấy giao dịch</h3>
+          <div class="quick-ranges" id="qlRanges">
+            <button data-qldays="7">7 ngày</button>
+            <button data-qldays="30">30 ngày</button>
+            <button data-qldays="month">Tháng này</button>
+            <button data-qldays="90">90 ngày</button>
+          </div>
+          <div class="field-row">
+            <label class="field"><span>Từ ngày</span><input type="date" id="qlFrom"></label>
+            <label class="field"><span>Đến ngày</span><input type="date" id="qlTo"></label>
+          </div>
+          <p class="hint">Khoảng ngày càng dài thì lấy dữ liệu càng lâu. Gói dịch vụ có giới hạn số ngày tra cứu lùi về trước.</p>
+        </section>
+        <div class="inline-result" id="qlResult" hidden></div>
+        <div class="inline-result warn" id="qlLocalWarn" hidden></div>
+      </div>
+
+      <footer class="ql-foot">
+        <button class="btn btn-link ql-relink" id="qlRelink" data-qlrelink hidden>← Liên kết ngân hàng khác</button>
+        <button class="btn btn-ghost" data-qlclose>Huỷ</button>
+        <button class="btn btn-primary" id="qlStart" disabled>Mở iframe Cas Link</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
