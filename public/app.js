@@ -1228,7 +1228,8 @@ async function openCasLink(grantToken) {
       grantToken,
       state: signed.state,
       iframe: true,
-      onSuccess: (publicToken) => resolve(publicToken),
+      // Cas Link không chuyển hướng được về localhost nên có thể báo thành công mà không có publicToken.
+      onSuccess: (publicToken) => (publicToken ? resolve(publicToken) : reject(new Error('Cas Link không trả publicToken.'))),
       onExit: () => reject(new Error('Đã đóng iframe khi chưa hoàn tất'))
     })
     link.open()
