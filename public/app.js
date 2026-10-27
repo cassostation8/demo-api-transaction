@@ -866,175 +866,8 @@ function renderCredFields() {
             <button type="button" class="secret-toggle" aria-label="Hiện / ẩn secret">Hiện</button>
           </span></label>
       </div>
-      <button type="button" class="btn btn-secondary btn-sm" data-console-picker>Chọn credential và liên kết từ Casso Console</button>
       <p class="hint">Key của tổ chức ${envName}, lấy ở Casso Console → API Credential. Chỉ gửi tới server demo để gọi Casso, không lưu lại.</p>`
   })
-}
-
-let consolePickerCredential = null
-let consolePickerConnection = null
-let consolePickerEnvironment = 'sandbox'
-let consolePickerLoading = false
-
-async function portalGet(path) {
-  const response = await fetch(path, { credentials: 'include', headers: { Accept: 'application/json' } })
-  let payload
-  try {
-    payload = await response.json()
-  } catch {
-    throw new Error('Không đọc được API Casso Console. Hãy mở demo từ Console cùng domain hoặc nhập credential thủ công.')
-  }
-  if (!response.ok) {
-    const error = new Error(payload?.error?.errorMessage || `Không thể đọc dữ liệu Console (HTTP ${response.status}).`)
-    error.status = response.status
-    throw error
-  }
-  return payload
-}
-
-// Màn hình chờ khi đang lấy dữ liệu thật sau "Dùng lựa chọn"; gọi lại để đổi dòng trạng thái, hideProdLoading() để tắt.
-function showProdLoading(detail) {
-  let el = $('prodLoading')
-  if (!el) {
-    el = document.createElement('div')
-    el.id = 'prodLoading'
-    el.className = 'prod-loading'
-    el.setAttribute('role', 'alertdialog')
-    el.setAttribute('aria-busy', 'true')
-    el.innerHTML = `
-      <div class="prod-loading-card">
-        <div class="prod-loading-spinner" aria-hidden="true"></div>
-        <h2>Đang lấy dữ liệu thật cho bạn</h2>
-        <p id="prodLoadingDetail" role="status" aria-live="polite"></p>
-        <button type="button" class="btn btn-ghost btn-sm" data-prod-loading-hide>Ẩn, tiếp tục chạy nền</button>
-      </div>`
-    el.querySelector('[data-prod-loading-hide]').onclick = hideProdLoading
-    document.body.append(el)
-  }
-  el.querySelector('#prodLoadingDetail').textContent = detail
-  el.hidden = false
-}
-
-function hideProdLoading() {
-  const el = $('prodLoading')
-  if (el) el.hidden = true
-}
-
-function ensureConsolePicker() {
-  let dialog = $('consolePicker')
-  if (dialog) return dialog
-  dialog = document.createElement('dialog')
-  dialog.id = 'consolePicker'
-  dialog.className = 'console-picker'
-  dialog.setAttribute('aria-labelledby', 'consolePickerTitle')
-  dialog.innerHTML = `
-    <h2 id="consolePickerTitle">Chọn dữ liệu từ Casso Console</h2>
-    <p class="console-picker-copy">Dùng credential và kết nối trong tổ chức hiện tại. Secret chỉ được lấy sau khi bạn chọn credential.</p>
-    <p id="consolePickerStatus" class="console-picker-status" role="status" aria-live="polite">Đang tải phiên Console…</p>
-    <label class="field"><span>Credential</span><select id="consolePickerCredential" disabled><option value="">Chọn credential</option></select></label>
-    <label class="field"><span>Kết nối ngân hàng</span><select id="consolePickerConnection" disabled><option value="">Chọn kết nối</option></select></label>
-    <div class="console-picker-actions">
-      <button type="button" class="btn btn-ghost" data-console-picker-close>Nhập thủ công</button>
-      <button type="button" class="btn btn-primary" id="consolePickerApply" disabled>Dùng lựa chọn</button>
-    </div>`
-  dialog.addEventListener('close', () => {
-    consolePickerCredential = null
-    consolePickerConnection = null
-  })
-  document.body.append(dialog)
-  return dialog
-}
-
-function updateConsolePickerApply(dialog) {
-  const apply = dialog.querySelector('#consolePickerApply')
-  apply.disabled = !consolePickerCredential?.secret_key || !consolePickerConnection
-}
-
-async function openConsolePicker() {
-  if (consolePickerLoading) return
-  consolePickerLoading = true
-  consolePickerCredential = null
-  consolePickerConnection = null
-  const dialog = ensureConsolePicker()
-  const status = dialog.querySelector('#consolePickerStatus')
-  const credentialSelect = dialog.querySelector('#consolePickerCredential')
-  const connectionSelect = dialog.querySelector('#consolePickerConnection')
-  status.textContent = 'Đang tải phiên Console…'
-  credentialSelect.disabled = true
-  connectionSelect.disabled = true
-  dialog.querySelector('#consolePickerApply').disabled = true
-  if (!dialog.open) dialog.showModal()
-
-  try {
-    const [me, credentialData, connectionData] = await Promise.all([
-      portalGet('/portal/me'),
-      portalGet('/portal/credentials'),
-      portalGet('/portal/org-grants'),
-    ])
-    if (!me.org) throw new Error('Phiên hiện tại chưa có tổ chức trong Casso Console.')
-    consolePickerEnvironment = me.org.environment === 'production' ? 'production' : 'sandbox'
-
-    const credentials = (credentialData.credentials || []).filter((credential) => credential.allowed_services?.includes('transactions'))
-    const connections = (connectionData.connections || []).filter((connection) => connection.service === 'bank_connect' && connection.account_id)
-    credentialSelect.onchange = async () => {
-      consolePickerCredential = null
-      updateConsolePickerApply(dialog)
-      const clientId = credentialSelect.value
-      if (!clientId) return
-      status.textContent = 'Đang kiểm tra quyền xem secret của credential…'
-      try {
-        const result = await portalGet(`/portal/credentials/${encodeURIComponent(clientId)}`)
-        if (!dialog.open || credentialSelect.value !== clientId) return
-        consolePickerCredential = result.credential
-        status.textContent = consolePickerCredential.secret_key
-          ? 'Chọn kết nối ngân hàng để tiếp tục.'
-          : 'Vai trò hiện tại không được xem secret key. Hãy dùng credential khác hoặc nhập thủ công.'
-      } catch (error) {
-        if (!dialog.open || credentialSelect.value !== clientId) return
-        status.textContent = error.message
-      }
-      updateConsolePickerApply(dialog)
-    }
-    connectionSelect.onchange = () => {
-      consolePickerConnection = connections.find((connection) => connection.account_id === connectionSelect.value) || null
-      updateConsolePickerApply(dialog)
-    }
-    credentialSelect.innerHTML = '<option value="">Chọn credential</option>' + credentials.map((credential) =>
-      `<option value="${escapeHtml(credential.client_id)}">${escapeHtml(credential.name)} · ${escapeHtml(credential.client_id)}</option>`,
-    ).join('')
-    connectionSelect.innerHTML = '<option value="">Chọn kết nối ngân hàng</option>' + connections.map((connection) => {
-      const label = connection.label || connection.account_id
-      return `<option value="${escapeHtml(connection.account_id)}">${escapeHtml(label)} · ${escapeHtml(connection.account_id)}</option>`
-    }).join('')
-    credentialSelect.disabled = !credentials.length
-    connectionSelect.disabled = !connections.length
-
-    if (!credentials.length) status.textContent = 'Không có credential được cấp quyền Transactions. Bạn vẫn có thể nhập thủ công.'
-    else if (!connections.length) status.textContent = 'Tổ chức chưa có kết nối ngân hàng khả dụng. Bạn vẫn có thể nhập thủ công.'
-    else status.textContent = 'Chọn credential và kết nối đã có trong tổ chức.'
-    dialog.querySelector('#consolePickerApply').onclick = () => {
-      if (!consolePickerCredential?.secret_key || !consolePickerConnection) return
-      const hasProgress = state.cred.clientId || state.accessToken || state.real || Object.keys(state.results).length || val('claimLinkId') || val('txToken')
-      if (hasProgress && !confirm('Dùng lựa chọn mới sẽ thay credential và xoá token/kết quả hiện tại. Tiếp tục?')) return
-      resetFlow()
-      state.env = consolePickerEnvironment
-      sessionSet('casso_env', state.env)
-      state.cred = { clientId: consolePickerCredential.client_id, secretKey: consolePickerCredential.secret_key }
-      renderEnv()
-      $('claimLinkId').value = consolePickerConnection.account_id
-      setMethod('claim')
-      renderApiPanel('apiClaim')
-      dialog.close()
-      toast('Đã chọn từ Casso Console — đang lấy dữ liệu thật…', 'success')
-      void autoLoadFromConsole()
-    }
-  } catch (error) {
-    status.textContent = error.message || 'Không thể tải dữ liệu từ Casso Console. Bạn vẫn có thể nhập thủ công.'
-    credentialSelect.disabled = true
-    connectionSelect.disabled = true
-  } finally {
-    consolePickerLoading = false
-  }
 }
 
 // ------------------------------------------------------------------
@@ -1223,21 +1056,6 @@ async function doClaim() {
   return false
 }
 
-// Sau khi chọn từ Console: claim → transactions 30 ngày → đổ dữ liệu thật vào dashboard.
-async function autoLoadFromConsole() {
-  showProdLoading('Đang lấy accessToken cho kết nối ngân hàng…')
-  const claimed = await doClaim()
-  if (!claimed) return hideProdLoading()
-  setRange(30)
-  showProdLoading('Đang tải giao dịch 30 ngày gần nhất…')
-  const result = await doFetch({ scroll: false })
-  hideProdLoading()
-  if (!result.ok) return scrollToStep(2)
-  state.heroSource = 'real'
-  renderHero()
-  $('hero').scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
 // Ngân hàng cá nhân đã có liên kết trong tổ chức: chọn 1 liên kết có sẵn (→ account_id) hoặc 'new' (mở iframe); null = huỷ.
 function choosePersonalLink(links, bankName) {
   let dialog = $('personalChoice')
@@ -1319,7 +1137,7 @@ async function doFiServices(btn = $('btnFiServices')) {
 function renderBankGrids() {
   renderBankGrid('bankGrid', 'bankSearch', 'Danh sách ngân hàng hiện sau khi tải ở bước a.')
   renderBankGrid('qlBankGrid', 'qlBankSearch', 'Nhập key rồi bấm "Tải danh sách ngân hàng".')
-  if (state.qlPhase !== 'range') $('qlStart').disabled = !state.selectedBank
+  if (state.qlPhase !== 'range') updateQlStart()
 }
 
 function renderBankGrid(gridId, searchId, emptyText) {
@@ -1605,10 +1423,9 @@ function openQuickLink() {
     : 'Dùng key của <b>tổ chức thật</b>. Trong iframe, đăng nhập bằng tài khoản ngân hàng doanh nghiệp và OTP.'
   $('qlTestAccounts').hidden = !isSandbox
   $('qlTestAccounts').innerHTML = isSandbox ? testAccountsHtml() : ''
-  const localWarn = $('localhostWarn')
-  $('qlLocalWarn').hidden = localWarn.hidden
-  $('qlLocalWarn').innerHTML = localWarn.innerHTML
+  $('qlLocalWarn').innerHTML = $('localhostWarn').innerHTML
   setQlPhase('link')
+  setQlMode('iframe')
   renderBankGrids()
   $('quickLinkModal').hidden = false
   document.body.classList.add('overlay-open')
@@ -1637,10 +1454,35 @@ function setQlPhase(phase) {
     $('qlProgress').hidden = true
     QL_STEPS.forEach((k) => qlStep(k, ''))
     $('qlProgress').hidden = true
+    updateQlStart()
   } else {
+    $('qlStart').textContent = 'Lấy giao dịch'
+    $('qlStart').disabled = false
+    $('qlLocalWarn').hidden = true
     if (!val('qlFrom') || !val('qlTo')) setQlRange('30')
     else setQlRange(null)
   }
+}
+
+// Hai cách liên kết trong hộp thoại: 'account' = dùng account_id có sẵn (grant/claim, không iframe, không cần localhost) | 'iframe' = liên kết mới qua Cas Link.
+function setQlMode(mode) {
+  state.qlMode = mode
+  document.querySelectorAll('[data-qlmode]').forEach((b) => {
+    const active = b.dataset.qlmode === mode
+    b.classList.toggle('active', active)
+    b.setAttribute('aria-checked', active)
+  })
+  $('qlAccountBox').hidden = mode !== 'account'
+  $('qlIframeBox').hidden = mode !== 'iframe'
+  $('qlLocalWarn').hidden = mode !== 'iframe' || $('localhostWarn').hidden
+  updateQlStart()
+}
+
+function updateQlStart() {
+  if (state.qlPhase === 'range') return
+  const isAccount = state.qlMode === 'account'
+  $('qlStart').textContent = isAccount ? 'Lấy accessToken bằng account_id' : 'Mở iframe Cas Link'
+  $('qlStart').disabled = isAccount ? !val('qlAccountId') : !state.selectedBank
 }
 
 function setQlRange(days) {
@@ -1677,7 +1519,55 @@ function qlShowError(err, step) {
 }
 
 function runQuickLink() {
-  return state.qlPhase === 'range' ? runQlFetch() : runQlLink()
+  if (state.qlPhase === 'range') return runQlFetch()
+  return state.qlMode === 'account' ? runQlAccount() : runQlLink()
+}
+
+// Sau khi có accessToken: hiện thông báo thành công và chuyển sang giai đoạn chọn khoảng ngày.
+function finishQlLink(title, { viaClaim, accounts }) {
+  const accText = (accounts || []).map((a) => `${escapeHtml(a.accountNumber)}${a.accountName ? ` · ${escapeHtml(a.accountName)}` : ''}`).join(', ')
+  $('qlLinked').innerHTML = `
+    <span class="ok-dot">${ICONS.check}</span>
+    <div><b>Đã liên kết ${escapeHtml(title)}</b>
+      <span class="muted">${viaClaim ? 'Dùng kết nối có sẵn của tổ chức.' : 'Đăng nhập ngân hàng thành công.'}${accText ? ` Tài khoản: ${accText}.` : ''}</span></div>`
+  setQlPhase('range')
+  $('qlSecRange').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  $('qlRanges').querySelector('button.active, button')?.focus()
+  toast('Liên kết thành công — chọn khoảng thời gian để lấy giao dịch', 'success')
+}
+
+// Cách account_id: grant/claim trực tiếp bằng account_id của kết nối đã có. Không tạo grant/token, không mở iframe.
+async function runQlAccount() {
+  const linkId = val('qlAccountId')
+  if (!linkId) return toast('Nhập account_id trước', 'error')
+
+  const btn = $('qlStart')
+  setBusy(btn, true, 'Đang lấy accessToken…')
+  QL_STEPS.forEach((k) => qlStep(k, ''))
+  $('qlResult').hidden = true
+  qlStep('token', 'skip', 'Bỏ qua — dùng account_id có sẵn')
+  qlStep('login', 'skip', 'Bỏ qua — không mở iframe')
+  qlStep('exchange', 'run', 'grant/claim')
+  try {
+    $('claimLinkId').value = linkId
+    const cl = await api('api/grant/claim', { method: 'POST', body: { linkId } })
+    if (cl.missingKeys) throw qlFail(cl)
+    recordResult('claim', cl)
+    const first = cl.data?.results?.[0]
+    if (!(cl.ok && first?.ok && first.access_token)) {
+      throw qlFail({ ...cl, data: { error: { errorCode: first?.error || errorOf(cl)?.errorCode || 'NOT_FOUND' } } })
+    }
+    qlStep('exchange', 'done', 'grant/claim')
+    onAccessToken(first.access_token, null)
+    renderWidgetSteps()
+    setBusy(btn, false)
+    finishQlLink(`kết nối ${linkId}`, { viaClaim: true, accounts: null })
+  } catch (err) {
+    qlShowError(err, 'exchange')
+  } finally {
+    setBusy(btn, false)
+    if (state.qlPhase === 'range') $('qlStart').textContent = 'Lấy giao dịch'
+  }
 }
 
 // Giai đoạn 1: grant/token → (iframe → grant/exchange) hoặc (grant/claim nếu ngân hàng đã liên kết)
@@ -1748,15 +1638,7 @@ async function runQlLink() {
     renderWidgetSteps()
     setBusy(btn, false)
 
-    const accText = (accounts || []).map((a) => `${escapeHtml(a.accountNumber)}${a.accountName ? ` · ${escapeHtml(a.accountName)}` : ''}`).join(', ')
-    $('qlLinked').innerHTML = `
-      <span class="ok-dot">${ICONS.check}</span>
-      <div><b>Đã liên kết ${escapeHtml(bank.name)}</b>
-        <span class="muted">${viaClaim ? 'Dùng kết nối có sẵn của tổ chức.' : 'Đăng nhập ngân hàng thành công.'}${accText ? ` Tài khoản: ${accText}.` : ''}</span></div>`
-    setQlPhase('range')
-    $('qlSecRange').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    $('qlRanges').querySelector('button.active, button')?.focus()
-    toast('Liên kết thành công — chọn khoảng thời gian để lấy giao dịch', 'success')
+    finishQlLink(bank.name, { viaClaim, accounts })
   } catch (err) {
     qlShowError(err, current)
   } finally {
@@ -1835,8 +1717,6 @@ document.addEventListener('click', (e) => {
   const t = e.target.closest('button, a')
   if (!t) return
 
-  if (t.hasAttribute('data-console-picker')) return void openConsolePicker()
-  if (t.hasAttribute('data-console-picker-close')) return $('consolePicker')?.close()
   if (t.dataset.copy !== undefined) return copyText(t.dataset.copy, t.dataset.copyLabel || 'giá trị')
   if (t.dataset.copyFrom) return copyText($(t.dataset.copyFrom).textContent, t.dataset.copyLabel || 'giá trị')
   if (t.dataset.curl) return copyText(curlFor(t.dataset.curl), 'cURL')
@@ -1852,6 +1732,7 @@ document.addEventListener('click', (e) => {
   if (t.dataset.qlclose !== undefined) return closeQuickLink()
   if (t.dataset.qldays) return setQlRange(t.dataset.qldays)
   if (t.dataset.qlrelink !== undefined) return setQlPhase('link')
+  if (t.dataset.qlmode) return setQlMode(t.dataset.qlmode)
   if (t.dataset.call) {
     state.activeCall[t.dataset.panel] = t.dataset.call
     return renderApiPanel(t.dataset.panel)
@@ -1937,6 +1818,7 @@ $('btnFetch').addEventListener('click', () => doFetch())
 $('btnIdentity').addEventListener('click', doIdentity)
 $('qlLoadBanks').addEventListener('click', () => doFiServices($('qlLoadBanks')))
 $('qlStart').addEventListener('click', runQuickLink)
+$('qlAccountId').addEventListener('input', updateQlStart)
 $('quickLinkModal').addEventListener('click', (e) => { if (e.target.id === 'quickLinkModal') closeQuickLink() })
 $('btnOpenDashboard').addEventListener('click', openResult)
 $('btnCloseResult').addEventListener('click', closeResult)
@@ -1980,7 +1862,7 @@ async function init() {
   if (publicToken) {
     history.replaceState(null, '', window.location.pathname + window.location.hash)
     receivePublicToken(publicToken)
-  } else void openConsolePicker()
+  }
 }
 
 init()

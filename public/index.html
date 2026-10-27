@@ -357,16 +357,28 @@
         </section>
 
         <section class="ql-sec" id="qlSecBank">
-          <h3><span class="ql-num">2</span>Ngân hàng</h3>
-          <button class="btn btn-secondary btn-sm" id="qlLoadBanks">Tải danh sách ngân hàng</button>
-          <div class="bank-toolbar">
-            <input type="search" id="qlBankSearch" placeholder="Tìm ngân hàng…" aria-label="Tìm ngân hàng">
-            <div class="seg">
-              <button class="seg-btn active" data-type="ENTERPRISE">Doanh nghiệp</button>
-              <button class="seg-btn" data-type="PERSONAL">Cá nhân</button>
-            </div>
+          <h3><span class="ql-num">2</span>Cách liên kết</h3>
+          <div class="seg ql-mode" role="radiogroup" aria-label="Cách liên kết">
+            <button class="seg-btn" role="radio" data-qlmode="account">Dùng account_id có sẵn</button>
+            <button class="seg-btn" role="radio" data-qlmode="iframe">Liên kết mới bằng iframe</button>
           </div>
-          <div class="bank-grid" id="qlBankGrid"></div>
+          <div id="qlAccountBox" hidden>
+            <label class="field"><span>account_id <em>— copy trên thẻ kết nối ở Casso Console</em></span>
+              <input type="text" id="qlAccountId" placeholder="account_id của kết nối đã có" autocomplete="off" spellcheck="false"></label>
+            <p class="hint">Không mở iframe, không cần chọn ngân hàng. Lấy accessToken trực tiếp bằng <code>grant/claim</code>.</p>
+          </div>
+          <div id="qlIframeBox" hidden>
+            <h4 class="ql-subhead">Ngân hàng</h4>
+            <button class="btn btn-secondary btn-sm" id="qlLoadBanks">Tải danh sách ngân hàng</button>
+            <div class="bank-toolbar">
+              <input type="search" id="qlBankSearch" placeholder="Tìm ngân hàng…" aria-label="Tìm ngân hàng">
+              <div class="seg">
+                <button class="seg-btn active" data-type="ENTERPRISE">Doanh nghiệp</button>
+                <button class="seg-btn" data-type="PERSONAL">Cá nhân</button>
+              </div>
+            </div>
+            <div class="bank-grid" id="qlBankGrid"></div>
+          </div>
         </section>
 
         <ol class="ql-progress" id="qlProgress" hidden>
